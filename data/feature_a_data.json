@@ -1,0 +1,220 @@
+{
+  "validUser": {
+    "email": "user@example.com",
+    "password": "correctPass123"
+  },
+  "adminUser": {
+    "email": "admin@example.com",
+    "password": "adminPass123"
+  },
+  "lockoutUser": {
+    "email": "lockout@example.com",
+    "password": "correctPass123",
+    "note": "Tài khoản riêng dùng cho test lockout, tránh ảnh hưởng các TC khác"
+  },
+  "domainCases": [
+    {
+      "tcId": "TC-01",
+      "description": "Đăng nhập thành công",
+      "email": "user@example.com",
+      "password": "correctPass123",
+      "expectedResult": "redirect_home",
+      "type": "positive"
+    },
+    {
+      "tcId": "TC-02",
+      "description": "Email rỗng",
+      "email": "",
+      "password": "correctPass123",
+      "expectedResult": "required_email",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-03",
+      "description": "Password rỗng",
+      "email": "user@example.com",
+      "password": "",
+      "expectedResult": "required_password",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-04",
+      "description": "Cả 2 field rỗng",
+      "email": "",
+      "password": "",
+      "expectedResult": "required_both",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-05",
+      "description": "Email sai format — không có @",
+      "email": "userexample.com",
+      "password": "correctPass123",
+      "expectedResult": "invalid_format",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-06",
+      "description": "Email sai format — thiếu domain",
+      "email": "user@",
+      "password": "correctPass123",
+      "expectedResult": "invalid_format",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-07",
+      "description": "Email chỉ có @",
+      "email": "@gmail.com",
+      "password": "correctPass123",
+      "expectedResult": "invalid_format",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-08",
+      "description": "Email không tồn tại trong DB",
+      "email": "notexist@gmail.com",
+      "password": "wrongPass",
+      "expectedResult": "login_failed",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-15",
+      "description": "Password có khoảng trắng đầu/cuối",
+      "email": "user@example.com",
+      "password": " correctPass123",
+      "expectedResult": "login_failed",
+      "type": "edge"
+    },
+    {
+      "tcId": "TC-16",
+      "description": "Email viết hoa toàn bộ",
+      "email": "USER@EXAMPLE.COM",
+      "password": "correctPass123",
+      "expectedResult": "redirect_home",
+      "type": "edge",
+      "knownBug": "FR02-07"
+    },
+    {
+      "tcId": "TC-17",
+      "description": "Password đúng nhưng khác hoa/thường",
+      "email": "user@example.com",
+      "password": "CORRECTPASS123",
+      "expectedResult": "login_failed",
+      "type": "edge"
+    }
+  ],
+  "bvaCases": [
+    {
+      "tcId": "BVA-01",
+      "description": "0 lần sai — dưới biên dưới",
+      "boundary": "below_lower_bound",
+      "attempts": 0,
+      "expectedResult": "login_success"
+    },
+    {
+      "tcId": "BVA-02",
+      "description": "Sai 1 lần — trong miền valid",
+      "boundary": "in_range",
+      "attempts": 1,
+      "expectedResult": "login_failed_retry"
+    },
+    {
+      "tcId": "BVA-03",
+      "description": "Sai 2 lần — just below boundary",
+      "boundary": "just_below",
+      "attempts": 2,
+      "expectedResult": "login_failed_retry",
+      "knownBug": "FR02-04"
+    },
+    {
+      "tcId": "BVA-04",
+      "description": "Sai 3 lần — on-point lockout",
+      "boundary": "on_point",
+      "attempts": 3,
+      "expectedResult": "account_locked",
+      "knownBug": "FR02-02"
+    },
+    {
+      "tcId": "BVA-05",
+      "description": "Sai 4 lần — just above boundary",
+      "boundary": "just_above",
+      "attempts": 4,
+      "expectedResult": "account_locked"
+    },
+    {
+      "tcId": "BVA-06",
+      "description": "Login đúng sau 29 giây — vẫn locked",
+      "boundary": "just_below_time",
+      "waitMs": 29000,
+      "expectedResult": "account_locked"
+    },
+    {
+      "tcId": "BVA-07",
+      "description": "Login đúng sau đúng 30 giây — on-point",
+      "boundary": "on_point_time",
+      "waitMs": 30000,
+      "expectedResult": "login_success",
+      "knownBug": "FR02-05"
+    },
+    {
+      "tcId": "BVA-08",
+      "description": "Login đúng sau 31 giây — just above",
+      "boundary": "just_above_time",
+      "waitMs": 31000,
+      "expectedResult": "login_success",
+      "knownBug": "FR02-05"
+    },
+    {
+      "tcId": "BVA-09",
+      "description": "Email rỗng — on-point empty",
+      "boundary": "on_point_empty_email",
+      "email": "",
+      "expectedResult": "required_email"
+    },
+    {
+      "tcId": "BVA-10",
+      "description": "Email format tối thiểu hợp lệ",
+      "boundary": "on_point_min_email",
+      "email": "a@b.c",
+      "expectedResult": "submit_allowed"
+    },
+    {
+      "tcId": "BVA-11",
+      "description": "Email thiếu @",
+      "boundary": "invalid_email",
+      "email": "usergmail.com",
+      "expectedResult": "invalid_format",
+      "knownBug": "FR02-06"
+    },
+    {
+      "tcId": "BVA-12",
+      "description": "Email thiếu local part",
+      "boundary": "invalid_email",
+      "email": "@gmail.com",
+      "expectedResult": "invalid_format",
+      "knownBug": "FR02-06"
+    },
+    {
+      "tcId": "BVA-13",
+      "description": "Email thiếu domain",
+      "boundary": "invalid_email",
+      "email": "user@",
+      "expectedResult": "invalid_format",
+      "knownBug": "FR02-06"
+    },
+    {
+      "tcId": "BVA-14",
+      "description": "Password rỗng — on-point empty",
+      "boundary": "on_point_empty_password",
+      "password": "",
+      "expectedResult": "required_password"
+    },
+    {
+      "tcId": "BVA-15",
+      "description": "Password 1 ký tự — just above empty",
+      "boundary": "just_above_empty_password",
+      "password": "a",
+      "expectedResult": "submit_allowed_server_reject"
+    }
+  ]
+}
