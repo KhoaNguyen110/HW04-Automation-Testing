@@ -1,0 +1,239 @@
+{
+  "users": {
+    "loggedIn": {
+      "email": "user@example.com",
+      "password": "correctPass123",
+      "note": "Tài khoản có đầy đủ địa chỉ và SĐT"
+    },
+    "noAddress": {
+      "email": "noaddress@example.com",
+      "password": "correctPass123",
+      "note": "Tài khoản chưa có địa chỉ nhận hàng"
+    },
+    "noPhone": {
+      "email": "nophone@example.com",
+      "password": "correctPass123",
+      "note": "Tài khoản chưa có SĐT"
+    },
+    "emptyProfile": {
+      "email": "emptyprofile@example.com",
+      "password": "correctPass123",
+      "note": "Tài khoản chưa có địa chỉ lẫn SĐT"
+    }
+  },
+  "products": {
+    "singleProduct": {
+      "id": 1,
+      "name": "Sản phẩm test A",
+      "price": 150000,
+      "quantity": 1
+    },
+    "multipleProducts": [
+      { "id": 1, "name": "Sản phẩm test A", "price": 150000, "quantity": 2 },
+      { "id": 2, "name": "Sản phẩm test B", "price": 80000, "quantity": 1 }
+    ]
+  },
+  "domainCases": [
+    {
+      "tcId": "TC-01",
+      "description": "Checkout thành công đầy đủ thông tin",
+      "auth": "loggedIn",
+      "cart": "single",
+      "totalSource": "backend",
+      "profile": "full",
+      "expectedResult": "order_created_cart_cleared",
+      "type": "positive",
+      "knownBug": "FR08-03"
+    },
+    {
+      "tcId": "TC-02",
+      "description": "Chưa đăng nhập vào trang checkout",
+      "auth": "none",
+      "expectedResult": "redirect_login",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-03",
+      "description": "Giỏ hàng rỗng",
+      "auth": "loggedIn",
+      "cart": "empty",
+      "expectedResult": "empty_cart_message",
+      "type": "negative"
+    },
+    {
+      "tcId": "TC-04",
+      "description": "Giỏ hàng 1 sản phẩm",
+      "auth": "loggedIn",
+      "cart": "single",
+      "expectedResult": "display_correct",
+      "type": "edge"
+    },
+    {
+      "tcId": "TC-05",
+      "description": "Giỏ hàng nhiều sản phẩm",
+      "auth": "loggedIn",
+      "cart": "multiple",
+      "expectedResult": "display_all_correct_total",
+      "type": "positive"
+    },
+    {
+      "tcId": "TC-06",
+      "description": "Client sửa total_amount trên UI",
+      "auth": "loggedIn",
+      "cart": "single",
+      "manipulatedTotal": 1,
+      "expectedResult": "backend_recalculates",
+      "type": "security",
+      "knownBug": "FR08-01"
+    },
+    {
+      "tcId": "TC-07",
+      "description": "Client gửi total_amount = 0",
+      "auth": "loggedIn",
+      "cart": "single",
+      "manipulatedTotal": 0,
+      "expectedResult": "backend_rejects",
+      "type": "security",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "TC-08",
+      "description": "Client gửi total_amount âm",
+      "auth": "loggedIn",
+      "cart": "single",
+      "manipulatedTotal": -1,
+      "expectedResult": "backend_rejects",
+      "type": "security",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "TC-09",
+      "description": "Thiếu địa chỉ vẫn checkout",
+      "auth": "noAddress",
+      "cart": "single",
+      "expectedResult": "error_missing_address",
+      "type": "negative",
+      "knownBug": "FR08-04"
+    },
+    {
+      "tcId": "TC-10",
+      "description": "Thiếu SĐT vẫn checkout",
+      "auth": "noPhone",
+      "cart": "single",
+      "expectedResult": "error_missing_phone",
+      "type": "negative",
+      "knownBug": "FR08-04"
+    },
+    {
+      "tcId": "TC-11",
+      "description": "Thiếu cả địa chỉ lẫn SĐT",
+      "auth": "emptyProfile",
+      "cart": "single",
+      "expectedResult": "error_missing_info",
+      "type": "negative",
+      "knownBug": "FR08-04"
+    },
+    {
+      "tcId": "TC-12",
+      "description": "Giỏ hàng bị xóa sau checkout",
+      "auth": "loggedIn",
+      "cart": "single",
+      "expectedResult": "cart_empty_after_checkout",
+      "type": "positive",
+      "knownBug": "FR08-03"
+    },
+    {
+      "tcId": "TC-13",
+      "description": "Lịch sử đơn hàng cập nhật sau checkout",
+      "auth": "loggedIn",
+      "cart": "single",
+      "expectedResult": "order_in_history",
+      "type": "positive"
+    },
+    {
+      "tcId": "TC-14",
+      "description": "Tổng tiền hiển thị đúng với giỏ hàng",
+      "auth": "loggedIn",
+      "cart": "multiple",
+      "expectedResult": "total_matches_sum",
+      "type": "positive"
+    }
+  ],
+  "bvaCases": [
+    {
+      "tcId": "BVA-01",
+      "description": "Giỏ hàng rỗng — on-point cart=0",
+      "cartItems": 0,
+      "boundary": "on_point",
+      "expectedResult": "block_checkout"
+    },
+    {
+      "tcId": "BVA-02",
+      "description": "Giỏ hàng 1 sản phẩm — just above",
+      "cartItems": 1,
+      "boundary": "just_above",
+      "expectedResult": "allow_checkout"
+    },
+    {
+      "tcId": "BVA-03",
+      "description": "Giỏ hàng 2 sản phẩm — in-range",
+      "cartItems": 2,
+      "boundary": "in_range",
+      "expectedResult": "allow_checkout"
+    },
+    {
+      "tcId": "BVA-04",
+      "description": "total_amount = 0 do client gửi",
+      "totalAmount": 0,
+      "boundary": "on_point_total",
+      "expectedResult": "backend_rejects",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "BVA-05",
+      "description": "total_amount âm do client gửi",
+      "totalAmount": -1,
+      "boundary": "below_boundary_total",
+      "expectedResult": "backend_rejects",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "BVA-07",
+      "description": "Client sửa total_amount nhỏ hơn thực",
+      "totalAmount": "less_than_actual",
+      "boundary": "manipulation",
+      "expectedResult": "backend_recalculates",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "BVA-08",
+      "description": "Client sửa total_amount lớn hơn thực",
+      "totalAmount": "greater_than_actual",
+      "boundary": "manipulation",
+      "expectedResult": "backend_recalculates",
+      "knownBug": "FR08-02"
+    },
+    {
+      "tcId": "BVA-09",
+      "description": "Số lượng sản phẩm = 0 — tự xóa khỏi giỏ",
+      "quantity": 0,
+      "boundary": "on_point_qty",
+      "expectedResult": "item_removed"
+    },
+    {
+      "tcId": "BVA-10",
+      "description": "Số lượng sản phẩm = 1 — just above",
+      "quantity": 1,
+      "boundary": "just_above_qty",
+      "expectedResult": "correct_price"
+    },
+    {
+      "tcId": "BVA-11",
+      "description": "Số lượng sản phẩm = 999 — far above (stress)",
+      "quantity": 999,
+      "boundary": "far_above_qty",
+      "expectedResult": "no_overflow",
+      "status": "not_executed"
+    }
+  ]
+}
