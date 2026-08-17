@@ -1,0 +1,5 @@
+test-results/
+html-reports/
+
+# Dependencies
+node_modules/
