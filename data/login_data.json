@@ -1,0 +1,129 @@
+{
+  "config": {
+    "base_url": "http://localhost:5173",
+    "login_url": "http://localhost:5173/login",
+    "admin_url": "http://localhost:5174",
+    "admin_login_url": "http://localhost:5174/",
+    "api_endpoint": "http://localhost:3000/api/users/me"
+  },
+  "credentials": {
+    "valid_user": {
+      "email": "test@eshop.com",
+      "password": "Test1234!"
+    },
+    "admin_user": {
+      "email": "admin@eshop.com",
+      "password": "Admin123!"
+    },
+    "wrong_password": "WrongPass999!"
+  },
+  "validation_cases": [
+    {
+      "tc_id": "TC-02",
+      "description": "Email rỗng - hiển thị lỗi bắt buộc nhập",
+      "email": "",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "TC-03",
+      "description": "Password rỗng - hiển thị lỗi bắt buộc nhập",
+      "email": "test@eshop.com",
+      "password": "",
+      "check_field": "password"
+    },
+    {
+      "tc_id": "TC-04",
+      "description": "Cả 2 field rỗng - hiển thị lỗi bắt buộc nhập",
+      "email": "",
+      "password": "",
+      "check_field": "both"
+    },
+    {
+      "tc_id": "TC-05",
+      "description": "Email sai format (không có @) - HTML5 báo lỗi",
+      "email": "userexample.com",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "TC-06",
+      "description": "Email thiếu domain (user@) - HTML5 báo lỗi",
+      "email": "user@",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "TC-07",
+      "description": "Email thiếu local part (@gmail.com) - HTML5 báo lỗi",
+      "email": "@gmail.com",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "BVA-09",
+      "description": "Email rỗng (on-point empty) - báo bắt buộc nhập",
+      "email": "",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "BVA-11",
+      "description": "Email thiếu @ (usergmail.com) - HTML5 báo lỗi",
+      "email": "usergmail.com",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "BVA-12",
+      "description": "Email thiếu local part (@gmail.com) - HTML5 báo lỗi",
+      "email": "@gmail.com",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "BVA-13",
+      "description": "Email thiếu domain (user@) - HTML5 báo lỗi",
+      "email": "user@",
+      "password": "Test1234!",
+      "check_field": "email"
+    },
+    {
+      "tc_id": "BVA-14",
+      "description": "Password rỗng (on-point empty) - báo bắt buộc nhập",
+      "email": "test@eshop.com",
+      "password": "",
+      "check_field": "password"
+    }
+  ],
+  "lockout_time_cases": [
+    {
+      "tc_id": "BVA-06",
+      "description": "Login đúng sau 179s - vẫn bị khóa",
+      "wait_seconds": 179,
+      "expect_success": false
+    },
+    {
+      "tc_id": "TC-14 / BVA-07 / BVA-08",
+      "description": "Login đúng sau >= 3 phút - đăng nhập thành công",
+      "wait_seconds": 181,
+      "expect_success": true
+    }
+  ],
+  "formatting_cases": [
+    {
+      "tc_id": "TC-16",
+      "description": "Email chữ HOA toàn bộ - đăng nhập thành công",
+      "email_transform": "uppercase",
+      "password_transform": "normal",
+      "expect_success": true
+    },
+    {
+      "tc_id": "TC-17",
+      "description": "Password sai hoa/thường - đăng nhập thất bại",
+      "email_transform": "normal",
+      "password_transform": "uppercase",
+      "expect_success": false
+    }
+  ]
+}
