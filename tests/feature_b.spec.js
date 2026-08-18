@@ -72,6 +72,26 @@ async function proceedToCheckout(page) {
   await page.getByRole("button", { name: "Tiến hành thanh toán" }).click();
 }
 
+async function getMaxOrderId(page) {
+  await page.goto(`${BASE_URL}/profile`);
+  await page.waitForLoadState("networkidle"); // Đợi bảng render xong
+
+  const rows = page.getByRole("row");
+  const count = await rows.count();
+  let maxId = 0;
+
+  for (let i = 0; i < count; i++) {
+    const text = await rows.nth(i).innerText();
+    // Regex tìm chuỗi dạng #10, #11, #12...
+    const match = text.match(/#(\d+)/);
+    if (match) {
+      const id = parseInt(match[1], 10);
+      if (id > maxId) maxId = id;
+    }
+  }
+
+  return maxId;
+}
 // ─── PHẦN 1: AUTH & EMPTY STATE ───
 
 // test.describe("FR-08: Checkout - Authentication & Giỏ hàng trống", () => {
@@ -115,162 +135,216 @@ async function proceedToCheckout(page) {
 
 // // ─── PHẦN 2: ITEM QUANTITIES & CART DISPLAY ───
 
-test.describe("FR-08: Checkout - Số lượng & Hiển thị giỏ hàng", () => {
-  //   test.beforeEach(async ({ page }) => {
-  //     await login(page);
-  //     await clearCart(page);
-  //   });
-
-  //   test("TC-04 / BVA-02: Giỏ hàng 1 sản phẩm - Hiển thị đúng 1 sản phẩm", async ({
-  //     page,
-  //   }) => {
-  //     await addSingleItemFromHome(page);
-  //     await page.getByRole("link", { name: "Giỏ hàng" }).click();
-
-  //     const rowCount = await page.getByRole("row").count();
-  //     expect(rowCount).toBe(2); // 1 header row + 1 item row
-  //     await expect(
-  //       page.getByRole("cell", { name: "1", exact: true }),
-  //     ).toBeVisible();
-  //   });
-
-  //   test("BVA-03: Giỏ hàng 2 sản phẩm - Cho checkout, hiển thị đủ 2 sản phẩm", async ({
-  //     page,
-  //   }) => {
-  //     await addSingleItemFromHome(page);
-  //     await addItemsFromDetail(page, 1);
-  //     await page.getByRole("link", { name: "Giỏ hàng" }).click();
-
-  //     await expect(
-  //       page.getByRole("button", { name: "Tiến hành thanh toán" }),
-  //     ).toBeEnabled();
-  //   });
-
-  //   test("TC-05 / TC-14: Giỏ hàng nhiều sản phẩm - Tổng tiền = sum(giá × số lượng)", async ({
-  //     page,
-  //   }) => {
-  //     await addItemsFromDetail(page, 2);
-  //     await page.getByRole("link", { name: "Giỏ hàng" }).click();
-
-  //     // Giả định đơn giá 30,000,000 -> 2 cái = 60,000,000
-  //     await expect(page.getByText("Tổng tạm tính: 60,000,000 ₫")).toBeVisible();
-  //   });
-
-  test("BVA-09: Đặt số lượng sản phẩm = 0 và thêm vào giỏ ", async ({
-    page,
-  }) => {
-    await page.goto(`${BASE_URL}/`);
-    await page.getByRole("link", { name: "Xem chi tiết" }).first().click();
-
-    const qtyInput = page.getByRole("spinbutton");
-    await qtyInput.fill("0");
-    await page.getByRole("button", { name: "Thêm vào giỏ hàng" }).dblclick();
-
-    await page.getByRole("link", { name: "Giỏ hàng" }).click();
-    try {
-      await expect(
-        page.getByRole("heading", { name: "Giỏ hàng của bạn đang trống" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: "Tiến hành thanh toán" }),
-      ).toBeHidden();
-    } catch (error) {
-      console.log(" Sản phẩm với số lượng = 0 vẫn được thêm vào giỏ hàng");
-      // Đánh dấu soft fail để Playwright ghi nhận bug nhưng không văng app
-      expect
-        .soft(true, "UI hiển thị sai trạng thái giỏ hàng trống")
-        .toBe(false);
-    }
-  });
-
-  // test("BVA-10: Số lượng sản phẩm = 1 - Tính đúng giá × 1", async ({
-  //   page,
-  // }) => {
-  //   await addItemsFromDetail(page, 1);
-  //   await page.getByRole("link", { name: "Giỏ hàng" }).click();
-
-  //   await expect(
-  //     page.getByRole("cell", { name: "1", exact: true }),
-  //   ).toBeVisible();
-  //   await expect(page.getByText("Tổng tạm tính: 30,000,000 ₫")).toBeVisible();
-  // });
-
-  // test("BVA-11: Số lượng sản phẩm lớn (stress 12,345 items) - Tính đúng tổng, không overflow", async ({
-  //   page,
-  // }) => {
-  //   await addItemsFromDetail(page, 12345);
-  //   await page.getByRole("link", { name: "Giỏ hàng" }).click();
-
-  //   await expect(
-  //     page.getByRole("cell", { name: "370,350,000,000 ₫" }),
-  //   ).toBeVisible();
-  // });
-});
-
-// // ─── PHẦN 3: CHECKOUT SUCCESS FLOW & POST-CONDITIONS ───
-
-// test.describe("FR-08: Checkout - Quy trình thanh toán thành công & Cập nhật dữ liệu", () => {
+//test.describe("FR-08: Checkout - Số lượng & Hiển thị giỏ hàng", () => {
 //   test.beforeEach(async ({ page }) => {
 //     await login(page);
-//     await updateProfileInfo(page, {
-//       phone: "0901234567",
-//       address: "123 Nguyen Van Cuye",
-//     });
 //     await clearCart(page);
 //   });
 
-//   test("TC-01: Checkout thành công đầy đủ thông tin - Báo thành công", async ({
+//   test("TC-04 / BVA-02: Giỏ hàng 1 sản phẩm - Hiển thị đúng 1 sản phẩm", async ({
 //     page,
 //   }) => {
 //     await addSingleItemFromHome(page);
-//     await proceedToCheckout(page);
+//     await page.getByRole("link", { name: "Giỏ hàng" }).click();
 
-//     await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
-
-//     // Expectation Fail ở HW02 (Cần ghi nhận đúng trạng thái UI thực tế)
-//     await expect
-//       .soft(page.getByRole("heading", { name: "Thanh toán thành công!" }))
-//       .toBeVisible();
+//     const rowCount = await page.getByRole("row").count();
+//     expect(rowCount).toBe(2); // 1 header row + 1 item row
+//     await expect(
+//       page.getByRole("cell", { name: "1", exact: true }),
+//     ).toBeVisible();
 //   });
 
-//   test("TC-12: Sau checkout thành công - Giỏ hàng phải rỗng", async ({
+//   test("BVA-03: Giỏ hàng 2 sản phẩm - Cho checkout, hiển thị đủ 2 sản phẩm", async ({
 //     page,
 //   }) => {
 //     await addSingleItemFromHome(page);
-//     await proceedToCheckout(page);
-//     await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
+//     await addItemsFromDetail(page, 1);
+//     await page.getByRole("link", { name: "Giỏ hàng" }).click();
 
-//     await page.getByRole("link", { name: "Giỏ hàng" }).click();;
-//     // Backend chưa xóa giỏ hàng -> FAIL ở HW02
-//     await expect
-//       .soft(page.getByRole("heading", { name: "Giỏ hàng của bạn đang trống" }))
-//       .toBeVisible();
+//     await expect(
+//       page.getByRole("button", { name: "Tiến hành thanh toán" }),
+//     ).toBeEnabled();
 //   });
 
-//   test("TC-13: Sau checkout thành công - Đơn hàng xuất hiện trong Lịch sử đơn hàng", async ({
+//   test("TC-05 / TC-14: Giỏ hàng nhiều sản phẩm - Tổng tiền = sum(giá × số lượng)", async ({
 //     page,
 //   }) => {
-//     await addSingleItemFromHome(page);
-//     await proceedToCheckout(page);
-//     await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
+//     await addItemsFromDetail(page, 2);
+//     await page.getByRole("link", { name: "Giỏ hàng" }).click();
 
-//     await page.goto(`${BASE_URL}/orders`); // Giả định đường dẫn lịch sử đơn hàng
-//     await expect(page.getByText("30,000,000 ₫")).toBeVisible();
+//     // Giả định đơn giá 30,000,000 -> 2 cái = 60,000,000
+//     await expect(page.getByText("Tổng tạm tính: 60,000,000 ₫")).toBeVisible();
 //   });
 
-//   test("BVA-06: total_amount = 1đ hợp lệ - Chấp nhận nếu sản phẩm giá 1đ", async ({
-//     page,
-//   }) => {
-//     // Mua sản phẩm có giá 1đ
-//     await addSingleItemFromHome(page);
-//     await proceedToCheckout(page);
+// test("BVA-09: Đặt số lượng sản phẩm = 0 và thêm vào giỏ ", async ({
+//   page,
+// }) => {
+//   await page.goto(`${BASE_URL}/`);
+//   await page.getByRole("link", { name: "Xem chi tiết" }).first().click();
 
-//     await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
-//     await expect
-//       .soft(page.getByRole("heading", { name: "Thanh toán thành công!" }))
-//       .toBeVisible();
-//   });
+//   const qtyInput = page.getByRole("spinbutton");
+//   await qtyInput.fill("0");
+//   await page.getByRole("button", { name: "Thêm vào giỏ hàng" }).dblclick();
+
+//   await page.getByRole("link", { name: "Giỏ hàng" }).click();
+//   try {
+//     await expect(
+//       page.getByRole("heading", { name: "Giỏ hàng của bạn đang trống" }),
+//     ).toBeVisible();
+//     await expect(
+//       page.getByRole("button", { name: "Tiến hành thanh toán" }),
+//     ).toBeHidden();
+//   } catch (error) {
+//     console.log(" Sản phẩm với số lượng = 0 vẫn được thêm vào giỏ hàng");
+//     // Đánh dấu soft fail để Playwright ghi nhận bug nhưng không văng app
+//     expect
+//       .soft(true, "UI hiển thị sai trạng thái giỏ hàng trống")
+//       .toBe(false);
+//   }
 // });
+
+// test("BVA-10: Số lượng sản phẩm = 1 - Tính đúng giá × 1", async ({
+//   page,
+// }) => {
+//   await addItemsFromDetail(page, 1);
+//   await page.getByRole("link", { name: "Giỏ hàng" }).click();
+
+//   await expect(
+//     page.getByRole("cell", { name: "1", exact: true }),
+//   ).toBeVisible();
+//   await expect(page.getByText("Tổng tạm tính: 30,000,000 ₫")).toBeVisible();
+// });
+
+// test("BVA-11: Số lượng sản phẩm lớn (stress 12,345 items) - Tính đúng tổng, không overflow", async ({
+//   page,
+// }) => {
+//   await addItemsFromDetail(page, 12345);
+//   await page.getByRole("link", { name: "Giỏ hàng" }).click();
+
+//   await expect(
+//     page.getByRole("cell", { name: "370,350,000,000 ₫" }),
+//   ).toBeVisible();
+// });
+// });
+
+// ─── PHẦN 3: CHECKOUT SUCCESS FLOW & POST-CONDITIONS ───
+
+test.describe("FR-08: Checkout - Quy trình thanh toán thành công & Cập nhật dữ liệu", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+    await updateProfileInfo(page, {
+      phone: "0901234567",
+      address: "123 Nguyen Van Cuye",
+    });
+    await clearCart(page);
+  });
+
+  // test("TC-01: Checkout thành công đầy đủ thông tin - Báo thành công", async ({
+  //   page,
+  // }) => {
+  //   await addSingleItemFromHome(page);
+  //   await proceedToCheckout(page);
+
+  //   await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
+
+  //   await expect
+  //     .soft(page.getByRole("heading", { name: "Thanh toán thành công!" }))
+  //     .toBeVisible();
+  // });
+
+  // test("TC-12: Sau checkout thành công - Giỏ hàng phải rỗng", async ({
+  //   page,
+  // }) => {
+  //   await addSingleItemFromHome(page);
+  //   await proceedToCheckout(page);
+  //   await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
+
+  //   await page.getByRole("link", { name: "Giỏ hàng" }).click();
+  //   try {
+  //     await expect(
+  //       page.getByRole("heading", { name: "Giỏ hàng của bạn đang trống" }),
+  //     ).toBeVisible();
+  //   } catch (error) {
+  //     console.log("Giỏ hàng không rỗng sau khi checkout thành công");
+  //     expect
+  //       .soft(true, "Giỏ hàng không rỗng sau khi checkout thành công")
+  //       .toBe(false);
+  //   }
+  // });
+
+  test("TC-13: Sau checkout thành công - Đơn hàng mới xuất hiện trong Lịch sử", async ({
+    page,
+  }) => {
+    // 1. Kiểm tra ID lớn nhất trước khi mua
+    const initialRowCount = await page.getByRole("row").count();
+    console.log(
+      `\n[INFO] Số lượng đơn hàng hiện tại: ${initialRowCount - 1} (trừ header)`,
+    );
+    const currentMaxId = await getMaxOrderId(page);
+    const expectedNewId = currentMaxId + 1;
+
+    console.log(`\n[INFO] Mã đơn hàng lớn nhất hiện tại: #${currentMaxId}`);
+    console.log(`[INFO] Kỳ vọng đơn hàng mới tạo sẽ có mã: #${expectedNewId}`);
+
+    // 2. Thực hiện mua hàng
+    await addSingleItemFromHome(page);
+    await proceedToCheckout(page);
+
+    await Promise.all([
+      page.waitForResponse(
+        (res) => res.request().method() === "POST" && res.status() < 400,
+        { timeout: 10000 },
+      ),
+      page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click(),
+    ]);
+    await page.pause();
+
+    // 3. Quay lại trang lịch sử đơn hàng
+    await page.goto(`${BASE_URL}/profile`);
+    await page.pause();
+
+    const newRowCount = await page.getByRole("row").count();
+    expect
+      .soft(
+        newRowCount,
+        `BUG SUT: Số lượng đơn hàng không tăng! (Cũ: ${initialRowCount}, Mới: ${newRowCount})`,
+      )
+      .toBe(initialRowCount + 1);
+
+    // 6. Kiểm tra Lớp 2: Xuất hiện hàng chứa mã #${expectedNewId}
+    const newOrderRow = page.getByRole("row").filter({
+      hasText: `#${expectedNewId}`,
+    });
+
+    await expect(
+      newOrderRow,
+      `BUG SUT: Không tìm thấy đơn hàng mới mã #${expectedNewId} trong lịch sử!`,
+    ).toBeVisible({ timeout: 5000 });
+  });
+
+  // test("BVA-06: total_amount = 1đ - Từ chối tạo đơn hàng nếu sản phẩm giá 1đ", async ({
+  //   page,
+  // }) => {
+  //   // Kiểm tra lịch sử đơn hàng rỗng trước khi mua sản phẩm giá 1đ
+  //   await page.goto(`${BASE_URL}/profile`);
+  //   await expect(page.getByText("1 ₫")).toBeHidden();
+
+  //   // Mua sản phẩm có giá 1đ
+  //   await addSingleItemFromHome(page);
+  //   await proceedToCheckout(page);
+
+  //   await page.getByRole("button", { name: "Xác Nhận Thanh Toán" }).click();
+  //   await expect
+  //     .soft(page.getByRole("heading", { name: "Thanh toán thành công!" }))
+  //     .toBeVisible();
+  //   await page.goto(`${BASE_URL}/profile`);
+  //   try {
+  //     await expect(page.getByText("1 ₫")).toBeHidden();
+  //   } catch (error) {
+  //     console.log("Cho phép tạo đơn 1đ");
+  //   }
+  // });
+});
 
 // // ─── PHẦN 4: SECURITY & CLIENT-SIDE MANIPULATION ───
 
